@@ -2,19 +2,55 @@
 #include <chrono>
 #include <iostream>
 
-#define NROWS 300
-#define NCOLS 300
-#define SCALE 3
+#define NROWS 150
+#define NCOLS 150
+#define SCALE 6
 #define FRAMERATE 60
 
 enum mat_type {
     air, water, sand
 };
 
+struct MatType {
+    float density = 0.0f;
+
+    static MatType air;
+    static MatType sand;
+    static MatType water;
+    constexpr bool operator==(const MatType& other) {
+        return density==other.density;
+    }
+};
+
+MatType MatType::air {
+    0.0f
+};
+MatType MatType::sand {
+    0.7f
+};
+MatType MatType::water {
+    0.2f
+};
+
 struct material {
-    mat_type type = air;
+    MatType type = MatType::air;
     uint32_t colour = 0;
     bool moved_this_tick = false;
+
+    material() {}
+    material(MatType t, uint32_t c): type(t), colour(c) {}
+    constexpr material& operator=(const material& other) {
+        type = other.type;
+        colour = other.colour;
+        moved_this_tick = other.moved_this_tick;
+        return *this;
+    }
+    constexpr bool operator==(const material& other) {
+        if(type == other.type && colour == other.colour)
+            return true;
+        else
+            return false;
+    }
 };
 
 void phys_tick(material *field);
@@ -41,10 +77,10 @@ int main() {
         float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(current_time - prev_cycle).count();
 
         if(dt > 1000/FRAMERATE) {
-            field[NCOLS/2] = { sand, 0x443300ff };
+            field[NCOLS/2] = material( MatType::sand, 0x443300ff );
             //field[NCOLS/2 + 20] = { water, 0x002277ff };
             //field[0] = { sand, 0x443300ff };
-            field[NCOLS-1] = { water, 0x002277ff };
+            field[NCOLS-1] = material( MatType::water, 0x002277ff );
             prev_cycle = current_time;
             phys_tick(field);
             update_buffer(field, draw_buffer);
@@ -68,59 +104,71 @@ void phys_tick(material *field) {
     for(int i = 0; i < NROWS*NCOLS; i++) {
         if(field[i].moved_this_tick)
             continue;
-        switch(field[i].type) {
-            case water:
-                phys_water(field, i);
-                break;
-            case sand:
-                phys_sand(field, i);
-                break;
-        }
+        if(field[i].type == MatType::water)
+            phys_water(field, i);
+        else if(field[i].type == MatType::sand)
+            phys_sand(field, i);
+        //switch(field[i].type) {
+        //    case MatType::water:
+        //        phys_water(field, i);
+        //        break;
+        //    case MatType::sand:
+        //        phys_sand(field, i);
+        //        break;
+        //}
         field[i].moved_this_tick = true; // Maybe move into phys functions to ignore air
     }
 }
 
 void phys_water(material *field, unsigned int index) {
-    if(index + NCOLS < NROWS*NCOLS && field[index + NCOLS].type == air) {
+    if(index + NCOLS < NROWS*NCOLS && field[index + NCOLS].type.density < MatType::water.density) {
+        auto temp = field[index + NCOLS];
         field[index + NCOLS] = field[index];
-        field[index] = { air, 0 };
+        field[index] = temp;
     } else if(index + NCOLS-1 < NROWS*NCOLS
             && (index + NCOLS-1)/NCOLS == index/NCOLS + 1 // Ensures water at screen edges doesn't wrap around to other side of screen
-            && field[index + NCOLS-1].type == air) {
+            && field[index + NCOLS-1].type.density < MatType::water.density) {
+        auto temp = field[index + NCOLS-1];
         field[index + NCOLS-1] = field[index];
-        field[index] = { air, 0 };
+        field[index] = temp;
     } else if(index + NCOLS+1 < NROWS*NCOLS
             && (index + NCOLS+1)/NCOLS == index/NCOLS + 1 // Ensures water at screen edges doesn't wrap around to other side of screen
-            && field[index + NCOLS+1].type == air) {
+            && field[index + NCOLS+1].type.density < MatType::water.density) {
+        auto temp = field[index + NCOLS+1];
         field[index + NCOLS+1] = field[index];
-        field[index] = { air, 0 };
+        field[index] = temp;
     } else if(index > 0
             && (index - 1)/NCOLS == index/NCOLS // Ensures water at screen edges doesn't wrap around to other side of screen
-            && field[index - 1].type == air) {
+            && field[index - 1].type.density < MatType::water.density) {
+        auto temp = field[index - 1];
         field[index - 1] = field[index];
-        field[index] = { air, 0 };
+        field[index] = temp;
     } else if(index < NROWS*NCOLS-1 
             && (index + 1)/NCOLS == index/NCOLS // Ensures water at screen edges doesn't wrap around to other side of screen
-            && field[index + 1].type == air) {
+            && field[index + 1].type.density < MatType::water.density) {
+        auto temp = field[index + 1];
         field[index + 1] = field[index];
-        field[index] = { air, 0 };
+        field[index] = temp;
     }
 }
 
 void phys_sand(material *field, unsigned int index) {
-    if(index + NCOLS < NROWS*NCOLS && field[index + NCOLS].type == air) {
+    if(index + NCOLS < NROWS*NCOLS && field[index + NCOLS].type.density < MatType::sand.density) {
+        auto temp = field[index + NCOLS];
         field[index + NCOLS] = field[index];
-        field[index] = { air, 0 };
+        field[index] = temp;
     } else if(index + NCOLS-1 < NROWS*NCOLS 
             && (index + NCOLS-1)/NCOLS == index/NCOLS + 1 // Ensures sand at screen edges doesn't wrap around to other side of screen
-            && field[index + NCOLS-1].type == air) {
+            && field[index + NCOLS-1].type.density < MatType::sand.density) {
+        auto temp = field[index + NCOLS-1];
         field[index + NCOLS-1] = field[index];
-        field[index] = { air, 0 };
+        field[index] = temp;
     } else if(index + NCOLS+1 < NROWS*NCOLS
             && (index + NCOLS+1)/NCOLS == index/NCOLS + 1 // Ensures sand at screen edges doesn't wrap around to other side of screen
-            && field[index + NCOLS+1].type == air) {
+            && field[index + NCOLS+1].type.density < MatType::sand.density) {
+        auto temp = field[index + NCOLS+1];
         field[index + NCOLS+1] = field[index];
-        field[index] = { air, 0 };
+        field[index] = temp;
     }
 }
 
