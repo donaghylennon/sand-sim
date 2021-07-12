@@ -18,6 +18,7 @@ public:
         type = air;
         density = 0;
         colour = 0;
+        falling = false;
     }
 };
 

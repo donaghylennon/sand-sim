@@ -74,16 +74,20 @@ int main() {
     auto prev_cycle = std::chrono::high_resolution_clock::now();
     bool running = true;
     draw(renderer, texture, draw_buffer);
+    bool lol = true;
     while(running) {
         auto current_time = std::chrono::high_resolution_clock::now();
         float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(current_time - prev_cycle).count();
 
         if(dt > 1000/FRAMERATE) {
             //field[NCOLS/2] = material( MatType::sand, 0x443300ff );
-            field[NCOLS/2] = Sand();
+            if(lol)
+                field[NCOLS/2] = Sand();
             //field[NCOLS/2 + 20] = { water, 0x002277ff };
             //field[0] = { sand, 0x443300ff };
-            field[NCOLS-1] = Water();
+            if(!lol)
+                field[NCOLS-1] = Water();
+            lol = !lol;
             prev_cycle = current_time;
             phys_tick(field);
             update_buffer(field, draw_buffer);
@@ -128,30 +132,40 @@ void phys_water(Material *field, unsigned int index) {
         auto temp = field[index + NCOLS];
         field[index + NCOLS] = field[index];
         field[index] = temp;
+        if(field[index].density > 0.0f)
+            field[index].falling = true;
     } else if(index + NCOLS-1 < NROWS*NCOLS
             && (index + NCOLS-1)/NCOLS == index/NCOLS + 1 // Ensures water at screen edges doesn't wrap around to other side of screen
             && field[index + NCOLS-1].density < field[index].density) {
         auto temp = field[index + NCOLS-1];
         field[index + NCOLS-1] = field[index];
         field[index] = temp;
+        if(field[index].density > 0.0f)
+            field[index].falling = true;
     } else if(index + NCOLS+1 < NROWS*NCOLS
             && (index + NCOLS+1)/NCOLS == index/NCOLS + 1 // Ensures water at screen edges doesn't wrap around to other side of screen
             && field[index + NCOLS+1].density < field[index].density) {
         auto temp = field[index + NCOLS+1];
         field[index + NCOLS+1] = field[index];
         field[index] = temp;
+        if(field[index].density > 0.0f)
+            field[index].falling = true;
     } else if(index > 0
             && (index - 1)/NCOLS == index/NCOLS // Ensures water at screen edges doesn't wrap around to other side of screen
             && field[index - 1].density < field[index].density) {
         auto temp = field[index - 1];
         field[index - 1] = field[index];
         field[index] = temp;
+        if(field[index].density > 0.0f)
+            field[index].falling = true;
     } else if(index < NROWS*NCOLS-1 
             && (index + 1)/NCOLS == index/NCOLS // Ensures water at screen edges doesn't wrap around to other side of screen
             && field[index + 1].density < field[index].density) {
         auto temp = field[index + 1];
         field[index + 1] = field[index];
         field[index] = temp;
+        if(field[index].density > 0.0f)
+            field[index].falling = true;
     } else {
         field[index].falling = false;
     }
@@ -162,18 +176,24 @@ void phys_sand(Material *field, unsigned int index) {
         auto temp = field[index + NCOLS];
         field[index + NCOLS] = field[index];
         field[index] = temp;
+        if(field[index].density > 0.0f)
+            field[index].falling = true;
     } else if(index + NCOLS-1 < NROWS*NCOLS 
             && (index + NCOLS-1)/NCOLS == index/NCOLS + 1 // Ensures sand at screen edges doesn't wrap around to other side of screen
             && field[index + NCOLS-1].density < field[index].density) {
         auto temp = field[index + NCOLS-1];
         field[index + NCOLS-1] = field[index];
         field[index] = temp;
+        if(field[index].density > 0.0f)
+            field[index].falling = true;
     } else if(index + NCOLS+1 < NROWS*NCOLS
             && (index + NCOLS+1)/NCOLS == index/NCOLS + 1 // Ensures sand at screen edges doesn't wrap around to other side of screen
             && field[index + NCOLS+1].density < field[index].density) {
         auto temp = field[index + NCOLS+1];
         field[index + NCOLS+1] = field[index];
         field[index] = temp;
+        if(field[index].density > 0.0f)
+            field[index].falling = true;
     } else {
         field[index].falling = false;
     }
