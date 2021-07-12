@@ -2,66 +2,68 @@
 #include <chrono>
 #include <iostream>
 
+#include "Material.h"
+
 #define NROWS 150
 #define NCOLS 150
 #define SCALE 6
 #define FRAMERATE 60
 
-enum mat_type {
-    air, water, sand
-};
+//enum mat_type {
+//    air, water, sand
+//};
+//
+//struct MatType {
+//    float density = 0.0f;
+//
+//    static MatType air;
+//    static MatType sand;
+//    static MatType water;
+//    constexpr bool operator==(const MatType& other) {
+//        return density==other.density;
+//    }
+//};
 
-struct MatType {
-    float density = 0.0f;
+//MatType MatType::air {
+//    0.0f
+//};
+//MatType MatType::sand {
+//    0.7f
+//};
+//MatType MatType::water {
+//    0.2f
+//};
 
-    static MatType air;
-    static MatType sand;
-    static MatType water;
-    constexpr bool operator==(const MatType& other) {
-        return density==other.density;
-    }
-};
+//struct material {
+//    MatType type = MatType::air;
+//    uint32_t colour = 0;
+//    bool moved_this_tick = false;
+//
+//    material() {}
+//    material(MatType t, uint32_t c): type(t), colour(c) {}
+//    constexpr material& operator=(const material& other) {
+//        type = other.type;
+//        colour = other.colour;
+//        moved_this_tick = other.moved_this_tick;
+//        return *this;
+//    }
+//    constexpr bool operator==(const material& other) {
+//        if(type == other.type && colour == other.colour)
+//            return true;
+//        else
+//            return false;
+//    }
+//};
 
-MatType MatType::air {
-    0.0f
-};
-MatType MatType::sand {
-    0.7f
-};
-MatType MatType::water {
-    0.2f
-};
-
-struct material {
-    MatType type = MatType::air;
-    uint32_t colour = 0;
-    bool moved_this_tick = false;
-
-    material() {}
-    material(MatType t, uint32_t c): type(t), colour(c) {}
-    constexpr material& operator=(const material& other) {
-        type = other.type;
-        colour = other.colour;
-        moved_this_tick = other.moved_this_tick;
-        return *this;
-    }
-    constexpr bool operator==(const material& other) {
-        if(type == other.type && colour == other.colour)
-            return true;
-        else
-            return false;
-    }
-};
-
-void phys_tick(material *field);
-void phys_water(material *field, unsigned int index);
-void phys_sand(material *field, unsigned int index);
-void set_all_unmoved(material *field);
-void update_buffer(material *field, uint32_t *buffer);
+void phys_tick(Material *field);
+void phys_water(Material *field, unsigned int index);
+void phys_sand(Material *field, unsigned int index);
+//void set_all_unmoved(Material *field);
+void update_buffer(Material *field, uint32_t *buffer);
 void draw(SDL_Renderer *renderer, SDL_Texture *texture, uint32_t *buffer);
 
 int main() {
-    material field[NROWS*NCOLS] = {};
+    Material field[NROWS*NCOLS] = { Air() };
     uint32_t draw_buffer[NROWS*NCOLS] = {};
 
     SDL_Init(SDL_INIT_VIDEO);
@@ -77,10 +79,11 @@ int main() {
         float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(current_time - prev_cycle).count();
 
         if(dt > 1000/FRAMERATE) {
-            field[NCOLS/2] = material( MatType::sand, 0x443300ff );
+            //field[NCOLS/2] = material( MatType::sand, 0x443300ff );
+            field[NCOLS/2] = Sand();
             //field[NCOLS/2 + 20] = { water, 0x002277ff };
             //field[0] = { sand, 0x443300ff };
-            field[NCOLS-1] = material( MatType::water, 0x002277ff );
+            field[NCOLS-1] = Water();
             prev_cycle = current_time;
             phys_tick(field);
             update_buffer(field, draw_buffer);
@@ -99,10 +102,10 @@ int main() {
     }
 }
 
-void phys_tick(material *field) {
-    set_all_unmoved(field);
+void phys_tick(Material *field) {
+    //set_all_unmoved(field);
     for(int i = 0; i < NROWS*NCOLS; i++) {
-        if(field[i].moved_this_tick)
+        if(!field[i].falling)
             continue;
         if(field[i].type == MatType::water)
             phys_water(field, i);
@@ -116,69 +119,73 @@ void phys_tick(material *field) {
         //        phys_sand(field, i);
         //        break;
         //}
-        field[i].moved_this_tick = true; // Maybe move into phys functions to ignore air
+        //field[i].moved_this_tick = true; // Maybe move into phys functions to ignore air
     }
 }
 
-void phys_water(material *field, unsigned int index) {
-    if(index + NCOLS < NROWS*NCOLS && field[index + NCOLS].type.density < MatType::water.density) {
+void phys_water(Material *field, unsigned int index) {
+    if(index + NCOLS < NROWS*NCOLS && field[index + NCOLS].density < field[index].density) {
         auto temp = field[index + NCOLS];
         field[index + NCOLS] = field[index];
         field[index] = temp;
     } else if(index + NCOLS-1 < NROWS*NCOLS
             && (index + NCOLS-1)/NCOLS == index/NCOLS + 1 // Ensures water at screen edges doesn't wrap around to other side of screen
-            && field[index + NCOLS-1].type.density < MatType::water.density) {
+            && field[index + NCOLS-1].density < field[index].density) {
         auto temp = field[index + NCOLS-1];
         field[index + NCOLS-1] = field[index];
         field[index] = temp;
     } else if(index + NCOLS+1 < NROWS*NCOLS
             && (index + NCOLS+1)/NCOLS == index/NCOLS + 1 // Ensures water at screen edges doesn't wrap around to other side of screen
-            && field[index + NCOLS+1].type.density < MatType::water.density) {
+            && field[index + NCOLS+1].density < field[index].density) {
         auto temp = field[index + NCOLS+1];
         field[index + NCOLS+1] = field[index];
         field[index] = temp;
     } else if(index > 0
             && (index - 1)/NCOLS == index/NCOLS // Ensures water at screen edges doesn't wrap around to other side of screen
-            && field[index - 1].type.density < MatType::water.density) {
+            && field[index - 1].density < field[index].density) {
         auto temp = field[index - 1];
         field[index - 1] = field[index];
         field[index] = temp;
     } else if(index < NROWS*NCOLS-1 
             && (index + 1)/NCOLS == index/NCOLS // Ensures water at screen edges doesn't wrap around to other side of screen
-            && field[index + 1].type.density < MatType::water.density) {
+            && field[index + 1].density < field[index].density) {
         auto temp = field[index + 1];
         field[index + 1] = field[index];
         field[index] = temp;
+    } else {
+        field[index].falling = false;
     }
 }
 
-void phys_sand(material *field, unsigned int index) {
-    if(index + NCOLS < NROWS*NCOLS && field[index + NCOLS].type.density < MatType::sand.density) {
+void phys_sand(Material *field, unsigned int index) {
+    if(index + NCOLS < NROWS*NCOLS && field[index + NCOLS].density < field[index].density) {
         auto temp = field[index + NCOLS];
         field[index + NCOLS] = field[index];
         field[index] = temp;
     } else if(index + NCOLS-1 < NROWS*NCOLS 
             && (index + NCOLS-1)/NCOLS == index/NCOLS + 1 // Ensures sand at screen edges doesn't wrap around to other side of screen
-            && field[index + NCOLS-1].type.density < MatType::sand.density) {
+            && field[index + NCOLS-1].density < field[index].density) {
         auto temp = field[index + NCOLS-1];
         field[index + NCOLS-1] = field[index];
         field[index] = temp;
     } else if(index + NCOLS+1 < NROWS*NCOLS
             && (index + NCOLS+1)/NCOLS == index/NCOLS + 1 // Ensures sand at screen edges doesn't wrap around to other side of screen
-            && field[index + NCOLS+1].type.density < MatType::sand.density) {
+            && field[index + NCOLS+1].density < field[index].density) {
         auto temp = field[index + NCOLS+1];
         field[index + NCOLS+1] = field[index];
         field[index] = temp;
+    } else {
+        field[index].falling = false;
     }
 }
 
-void set_all_unmoved(material *field) {
-    for(int i = 0; i < NROWS*NCOLS; i++) {
-        field[i].moved_this_tick = false;
-    }
-}
+//void set_all_unmoved(Material *field) {
+//    for(int i = 0; i < NROWS*NCOLS; i++) {
+//        field[i].moved_this_tick = false;
+//    }
+//}
 
-void update_buffer(material *field, uint32_t *buffer) {
+void update_buffer(Material *field, uint32_t *buffer) {
     for(int i = 0; i < NROWS*NCOLS; i++) {
         buffer[i] = field[i].colour;
     }
