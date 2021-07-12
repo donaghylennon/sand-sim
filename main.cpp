@@ -75,6 +75,9 @@ int main() {
     bool running = true;
     draw(renderer, texture, draw_buffer);
     bool lol = true;
+    bool mouse_is_down = false;
+    int selection = 0;
+    unsigned int index = 0;
     while(running) {
         auto current_time = std::chrono::high_resolution_clock::now();
         float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(current_time - prev_cycle).count();
@@ -94,6 +97,10 @@ int main() {
             draw(renderer, texture, draw_buffer);
         }
 
+        if(mouse_is_down) {
+            field[index] = Sand();
+        }
+
         SDL_Event event;
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
@@ -101,6 +108,15 @@ int main() {
                     running = false;
                     SDL_Quit();
                     break;
+                case SDL_MOUSEBUTTONDOWN:
+                    mouse_is_down = true;
+                    break;
+                case SDL_MOUSEBUTTONUP:
+                    mouse_is_down = false;
+                case SDL_MOUSEMOTION:
+                    unsigned int x_pos = event.motion.x/SCALE;
+                    unsigned int y_pos = event.motion.y/SCALE;
+                    index = NCOLS*y_pos + x_pos;
             }
         }
     }
