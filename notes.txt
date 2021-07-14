@@ -1,0 +1,16 @@
+function that takes a position of a (falling) block, identifies
+postions it could move into, and returns a pos or moves it into the 
+best candidate empty > lower density
+
+I'm probably going to need to use methods for the physics or something 
+similar, because they will work differently for every single material,
+maybe every material has different attributes?? and maybe functions 
+are just fine
+
+think ahead. what is the most flexible implementation that will be 
+extensible to different materials, as well as optimisations/chunking/threading
+
+also don't forget moving water more squares per tick, watch the vids if
+you have to
+
+(side idea: a mix of a powder game and an alchemy game could be pretty fun!)

@@ -1,0 +1,60 @@
+Need a more flexible, readable implementation of the physics
+
+If a block will be swapped, maybe prefer to flow down/to side than 
+be swapped upward
+
+When a block is placed every frame, its an unbroken tower -> swapping
+will immediately drive to the top
+
+function which identifies best block to move to
+    - When falling
+    - When displaced?
+    - takes position (, type?)
+    - overriden method?
+    - moves, or just returns index?
+
+more intelligent swap logic, displaces to best position
+e.g water to side, else up
+
+
+func best_move_pos(block, pos) {
+    *dependent on material*
+    checks each surrounding block
+        below -> dl,dr -> l,r -> up
+        (random left/right order)
+        don't discriminate lower density blocks and empty ones
+    return found_pos (or possibly just moves it)
+        return found_pos AND inhabited??
+}
+
+func move() {
+    *independent of material except for calling prev func(method?)*
+    only happens if falling
+    find best moveable pos
+    if inhabited 
+        "push" (function?)
+    change position to new pos
+    if can't move, falling = false
+}
+
+func push(from_direction, position) {
+    set falling
+    *is* independent of normal movement for material
+    Possibility of not working
+        prefer gravity over push dir, both work together
+        if the only option, may swap places
+}
+
+
+maybe this all should be a big array of a material enum
+with the corresponding physics called depending on value
+density function (better: array indexed by enum)
+Actually, will need to be a struct at least, each block will
+need a falling bool. Perhaps a colour, maybe a colour variance better,
+applied to base material colour.
+Or rather than seperate the data, maybe material struct, with single
+instance for each material, held in field class or something.
+Have array of these, index by the corresponding enum to access
+universal properties.
+
+spawn <material> functions
