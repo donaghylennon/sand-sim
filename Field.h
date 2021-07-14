@@ -5,7 +5,7 @@
 #include <iostream>
 
 enum MatType {
-    air, water, sand
+    air, water, sand, wood
 };
 
 struct Material {
@@ -32,10 +32,11 @@ private:
     uint32_t length;
     float framerate = 60.0f;
     Block *field;
-    Material materials[3] = {
+    Material materials[4] = {
         { 5, 0 }, // air
         { 9, 0x002277ff }, // water
         { 15, 0x443300ff }, // sand
+        { 40, 0x774400ff }, // wood
     };
 
     uint32_t *draw_buffer;
@@ -64,6 +65,7 @@ public:
 
     void spawn_water(unsigned int pos);
     void spawn_sand(unsigned int pos);
+    void spawn_wood(unsigned int pos);
 
     void draw();
     void run();

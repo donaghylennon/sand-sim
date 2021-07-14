@@ -213,13 +213,15 @@ void Field::run() {
                     move(i);
             }
             draw();
-        }
 
-        if(mouse_is_down) {
-            if(selection == 0)
-                field[index] = { sand, 0, true };
-            else if(selection == 1)
-                field[index] = { water, 0, true };
+            if(mouse_is_down) {
+                if(selection == 0)
+                    field[index] = { sand, 0, true };
+                else if(selection == 1)
+                    field[index] = { water, 0, true };
+                else if(selection == 2)
+                    field[index] = { wood, 0, false };
+            }
         }
 
         SDL_Event event;
@@ -247,6 +249,9 @@ void Field::run() {
                             break;
                         case SDLK_w:
                             selection = 1;
+                            break;
+                        case SDLK_e:
+                            selection = 2;
                             break;
                     }
                     break;
