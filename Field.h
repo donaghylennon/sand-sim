@@ -1,8 +1,10 @@
 #include <SDL2/SDL.h>
 
 #include <cstdint>
+#include <cstdlib>
 #include <chrono>
 #include <iostream>
+#include <ctime>
 
 enum MatType {
     air, water, sand, wood
@@ -11,12 +13,14 @@ enum MatType {
 struct Material {
     unsigned int density;
     uint32_t colour;
+    bool can_fall;
 };
 
 struct Block {
     MatType type;
     uint32_t shade;
     bool falling;
+    bool updated;
 };
 
 enum Direction { // May be better just done as position
@@ -33,10 +37,10 @@ private:
     float framerate = 60.0f;
     Block *field;
     Material materials[4] = {
-        { 5, 0 }, // air
-        { 9, 0x002277ff }, // water
-        { 15, 0x443300ff }, // sand
-        { 40, 0x774400ff }, // wood
+        { 5, 0, true }, // air
+        { 9, 0x002277ff, true }, // water
+        { 15, 0x443300ff, true }, // sand
+        { 40, 0x774400ff, false }, // wood
     };
 
     uint32_t *draw_buffer;
@@ -62,10 +66,13 @@ public:
     unsigned int water_next_pos(unsigned int pos);
     unsigned int sand_next_pos(unsigned int pos);
     void push(unsigned int from_pos, unsigned int pos);
+    void update_surrounding(unsigned int pos);
 
     void spawn_water(unsigned int pos);
     void spawn_sand(unsigned int pos);
     void spawn_wood(unsigned int pos);
+
+    void set_all_not_updated();
 
     void draw();
     void run();

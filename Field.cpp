@@ -13,8 +13,10 @@ Field::Field(uint32_t width, uint32_t height, uint32_t scale)
     SDL_TEXTUREACCESS_STREAMING, width, height);
 
     for(int i = 0; i < length; i++) {
-        field[i] = { air, 0, false };
+        field[i] = { air, 0, false, false };
     }
+
+    srand(time(NULL));
 
     std::cout << "Contructor end" << std::endl;
 }
@@ -100,7 +102,7 @@ void Field::move(unsigned int pos) {
         case sand:
             next_pos = sand_next_pos(pos);
             break;
-        case air:
+        default:
             return;
     }
     //if(next_pos >= length) {
@@ -120,29 +122,66 @@ void Field::move(unsigned int pos) {
         field[next_pos] = field[pos];
         field[pos] = temp;
         field[pos].falling = true;
+        //update_surrounding(next_pos);
+        field[next_pos].updated = true;
     }
 }
 
 unsigned int Field::water_next_pos(unsigned int pos) {
+    int rnd = rand() % 2;
     unsigned int south = south_block(pos);
     if(south != length && compare_densities(pos, south))
         return south;
 
-    unsigned int southwest = southwest_block(pos);
-    if(southwest != length && compare_densities(pos, southwest))
-        return southwest;
+    if(rnd) {
+        unsigned int southeast = southeast_block(pos);
+        if(southeast != length && compare_densities(pos, southeast))
+            return southeast;
 
-    unsigned int southeast = southeast_block(pos);
-    if(southeast != length && compare_densities(pos, southeast))
-        return southeast;
+        unsigned int southwest = southwest_block(pos);
+        if(southwest != length && compare_densities(pos, southwest))
+            return southwest;
 
-    unsigned int west = west_block(pos);
-    if(west != length && compare_densities(pos, west))
-        return west;
+        unsigned int east = east_block(pos);
+        if(east!= length && compare_densities(pos, east))
+            return east;
 
-    unsigned int east = east_block(pos);
-    if(east!= length && compare_densities(pos, east))
-        return east;
+        unsigned int west = west_block(pos);
+        if(west != length && compare_densities(pos, west))
+            return west;
+    } else {
+        unsigned int southwest = southwest_block(pos);
+        if(southwest != length && compare_densities(pos, southwest))
+            return southwest;
+
+        unsigned int southeast = southeast_block(pos);
+        if(southeast != length && compare_densities(pos, southeast))
+            return southeast;
+
+        unsigned int west = west_block(pos);
+        if(west != length && compare_densities(pos, west))
+            return west;
+
+        unsigned int east = east_block(pos);
+        if(east!= length && compare_densities(pos, east))
+            return east;
+    }
+
+    //unsigned int southeast = southeast_block(pos);
+    //if(southeast != length && compare_densities(pos, southeast))
+    //    return southeast;
+
+    //unsigned int southwest = southwest_block(pos);
+    //if(southwest != length && compare_densities(pos, southwest))
+    //    return southwest;
+
+    //unsigned int east = east_block(pos);
+    //if(east!= length && compare_densities(pos, east))
+    //    return east;
+
+    //unsigned int west = west_block(pos);
+    //if(west != length && compare_densities(pos, west))
+    //    return west;
 
     return pos;
 }
@@ -172,11 +211,59 @@ void Field::push(unsigned int from_pos, unsigned int pos) {
     }
 }
 
-void Field::spawn_water(unsigned int pos) {
+void Field::update_surrounding(unsigned int pos) {
+    unsigned int south = south_block(pos);
+    if(south != length && materials[field[south].type].can_fall)
+        field[south].falling = true;
 
+    unsigned int southwest = southwest_block(pos);
+    if(southwest != length && materials[field[southwest].type].can_fall)
+        field[southwest].falling = true;
+
+    unsigned int southeast = southeast_block(pos);
+    if(southeast != length && materials[field[southeast].type].can_fall)
+        field[southeast].falling = true;
+
+    unsigned int west = west_block(pos);
+    if(west != length && materials[field[west].type].can_fall)
+        field[west].falling = true;
+
+    unsigned int east = east_block(pos);
+    if(east != length && materials[field[east].type].can_fall)
+        field[east].falling = true;
+
+    unsigned int northwest = northwest_block(pos);
+    if(northwest != length && materials[field[northwest].type].can_fall)
+        field[northwest].falling = true;
+
+    unsigned int northeast = northeast_block(pos);
+    if(northeast != length && materials[field[northeast].type].can_fall)
+        field[northeast].falling = true;
+
+    unsigned int north = north_block(pos);
+    if(north != length && materials[field[north].type].can_fall)
+        field[north].falling = true;
 }
-void Field::spawn_sand(unsigned int pos) {
 
+void Field::spawn_water(unsigned int pos) {
+    field[pos] = { water, 0, true, false };
+    update_surrounding(pos);
+}
+
+void Field::spawn_sand(unsigned int pos) {
+    field[pos] = { sand, 0, true, false };
+    update_surrounding(pos);
+}
+
+void Field::spawn_wood(unsigned int pos) {
+    field[pos] = { wood, 0, false, false };
+    update_surrounding(pos);
+}
+
+void Field::set_all_not_updated() {
+    for(int i = 0; i < length; i++) {
+        field[i].updated = false;
+    }
 }
 
 void Field::draw() {
@@ -208,19 +295,20 @@ void Field::run() {
 
         if(dt > 1000/framerate) {
             prev_cycle = current_time;
+            set_all_not_updated();
             for(int i = 0; i < length; i++) {
-                if(field[i].falling)
+                if(!field[i].updated)
                     move(i);
             }
             draw();
 
             if(mouse_is_down) {
                 if(selection == 0)
-                    field[index] = { sand, 0, true };
+                    spawn_sand(index);
                 else if(selection == 1)
-                    field[index] = { water, 0, true };
+                    spawn_water(index);
                 else if(selection == 2)
-                    field[index] = { wood, 0, false };
+                    spawn_wood(index);
             }
         }
 
