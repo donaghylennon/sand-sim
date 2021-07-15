@@ -5,6 +5,7 @@
 #include <chrono>
 #include <iostream>
 #include <ctime>
+#include <vector>
 
 enum MatType {
     air, water, sand, wood
@@ -48,7 +49,10 @@ private:
     SDL_Renderer *renderer;
     SDL_Texture *texture;
 
-    unsigned int get_index(uint32_t x, uint32_t y);
+    unsigned int sel_index;
+    unsigned int sel_radius;
+
+    unsigned int get_index(unsigned int x, unsigned int  y);
     unsigned int south_block(unsigned int pos);
     unsigned int southwest_block(unsigned int pos);
     unsigned int southeast_block(unsigned int pos);
@@ -59,6 +63,8 @@ private:
     unsigned int north_block(unsigned int pos);
 
     inline int compare_densities(unsigned int pos_a, unsigned int pos_b);
+    std::vector<unsigned int> get_circle_points(unsigned int pos, unsigned int radius);
+    std::vector<unsigned int> get_circle(unsigned int pos);
 
 public:
     Field(uint32_t width, uint32_t height, uint32_t scale);
@@ -75,5 +81,6 @@ public:
     void set_all_not_updated();
 
     void draw();
+    void draw_selector();
     void run();
 };

@@ -18,10 +18,9 @@ Field::Field(uint32_t width, uint32_t height, uint32_t scale)
 
     srand(time(NULL));
 
-    std::cout << "Contructor end" << std::endl;
 }
 
-unsigned int Field::get_index(uint32_t x, uint32_t y) {
+unsigned int Field::get_index(unsigned int x, unsigned int y) {
     return y * width + x;
 }
 
@@ -91,6 +90,66 @@ unsigned int Field::north_block(unsigned int pos) {
 
 inline int Field::compare_densities(unsigned int pos_a, unsigned int pos_b) {
     return materials[(int) field[pos_a].type].density > materials[(int) field[pos_b].type].density;
+}
+
+std::vector<unsigned int> Field::get_circle_points(unsigned int pos, unsigned int radius) {
+    std::vector<unsigned int> points = {};
+    unsigned int X_c = pos % width;
+    unsigned int Y_c = pos / width;
+    unsigned int X = 0;
+    unsigned int Y = radius;
+    int D = 3 - (int)2 * radius;
+
+    while(X < Y) {
+        // Plot circle (X_c, Y_c, X, Y)
+        points.push_back(get_index(X_c + Y, Y_c + X));
+        points.push_back(get_index(X_c + X, Y_c + Y));
+        points.push_back(get_index(X_c - X, Y_c + Y));
+        points.push_back(get_index(X_c - Y, Y_c + X));
+        points.push_back(get_index(X_c - Y, Y_c - X));
+        points.push_back(get_index(X_c - X, Y_c - Y));
+        points.push_back(get_index(X_c + X, Y_c - Y));
+        points.push_back(get_index(X_c + Y, Y_c - X));
+        
+        if(D < 0) {
+            D = D + 4*X + 6;
+            X = X + 1;
+            Y = Y;
+        } else {
+            D = D + 4*(X-Y) + 10;
+            X = X + 1;
+            Y = Y - 1;
+        }
+    }
+    return points;
+}
+
+std::vector<unsigned int> Field::get_circle(unsigned int pos) {
+    // pos - 2*width -1  pos-2*width  pos-2*width+1
+    // pos - width-2 pos-width-1 pos-width pos -width+1 pos-width+2
+    std::vector<unsigned int> positions = {};
+    positions.push_back(pos - 2*width - 1);
+    positions.push_back(pos - 2*width);
+    positions.push_back(pos - 2*width + 1);
+    positions.push_back(pos - width - 2);
+    positions.push_back(pos - width - 1);
+    positions.push_back(pos - width);
+    positions.push_back(pos - width + 1);
+    positions.push_back(pos - width + 2);
+    positions.push_back(pos - 2);
+    positions.push_back(pos - 1);
+    positions.push_back(pos);
+    positions.push_back(pos + 1);
+    positions.push_back(pos + 2);
+    positions.push_back(pos + width - 2);
+    positions.push_back(pos + width - 1);
+    positions.push_back(pos + width);
+    positions.push_back(pos + width + 1);
+    positions.push_back(pos + width + 2);
+    positions.push_back(pos + 2*width - 1);
+    positions.push_back(pos + 2*width);
+    positions.push_back(pos + 2*width + 1);
+    return positions;
 }
 
 void Field::move(unsigned int pos) {
@@ -246,18 +305,30 @@ void Field::update_surrounding(unsigned int pos) {
 }
 
 void Field::spawn_water(unsigned int pos) {
-    field[pos] = { water, 0, true, false };
-    update_surrounding(pos);
+    for(auto& position : get_circle(pos)) {
+        if(position >= 0 && position < length)
+            field[position] = { water, 0, true, false };
+    }
+    //field[pos] = { water, 0, true, false };
+    //update_surrounding(pos);
 }
 
 void Field::spawn_sand(unsigned int pos) {
-    field[pos] = { sand, 0, true, false };
-    update_surrounding(pos);
+    for(auto& position : get_circle(pos)) {
+        if(position >= 0 && position < length)
+            field[position] = { sand, 0, true, false };
+    }
+    //field[pos] = { sand, 0, true, false };
+    //update_surrounding(pos);
 }
 
 void Field::spawn_wood(unsigned int pos) {
-    field[pos] = { wood, 0, false, false };
-    update_surrounding(pos);
+    for(auto& position : get_circle(pos)) {
+        if(position >= 0 && position < length)
+            field[position] = { wood, 0, false, false };
+    }
+    //field[pos] = { wood, 0, false, false };
+    //update_surrounding(pos);
 }
 
 void Field::set_all_not_updated() {
@@ -271,10 +342,19 @@ void Field::draw() {
         draw_buffer[i] = materials[(int) field[i].type].colour;
     }
 
+    draw_selector();
+
     SDL_UpdateTexture(texture, nullptr, draw_buffer, width*4);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, nullptr, nullptr);
     SDL_RenderPresent(renderer);
+}
+
+void Field::draw_selector() {
+    for(unsigned int position : get_circle_points(sel_index, sel_radius)) {
+        if(position >= 0 && position < length)
+            draw_buffer[position] = 0xFFFFFFFF;
+    }
 }
 
 void Field::run() {
@@ -284,9 +364,9 @@ void Field::run() {
     bool lol = true;
     bool mouse_is_down = false;
     int selection = 0;
-    unsigned int index = 0;
     unsigned int x_pos = 0;
     unsigned int y_pos = 0;
+    sel_radius = 5;
     while(running) {
         auto current_time = std::chrono::high_resolution_clock::now();
         float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(
@@ -304,11 +384,11 @@ void Field::run() {
 
             if(mouse_is_down) {
                 if(selection == 0)
-                    spawn_sand(index);
+                    spawn_sand(sel_index);
                 else if(selection == 1)
-                    spawn_water(index);
+                    spawn_water(sel_index);
                 else if(selection == 2)
-                    spawn_wood(index);
+                    spawn_wood(sel_index);
             }
         }
 
@@ -328,7 +408,7 @@ void Field::run() {
                 case SDL_MOUSEMOTION:
                     x_pos = event.motion.x/scale;
                     y_pos = event.motion.y/scale;
-                    index = width*y_pos + x_pos;
+                    sel_index = width*y_pos + x_pos;
                     break;
                 case SDL_KEYDOWN:
                     switch(event.key.keysym.sym) {
@@ -340,6 +420,21 @@ void Field::run() {
                             break;
                         case SDLK_e:
                             selection = 2;
+                            break;
+                        case SDLK_3:
+                            sel_radius = 3;
+                            break;
+                        case SDLK_4:
+                            sel_radius = 4;
+                            break;
+                        case SDLK_5:
+                            sel_radius = 5;
+                            break;
+                        case SDLK_6:
+                            sel_radius = 6;
+                            break;
+                        case SDLK_7:
+                            sel_radius = 7;
                             break;
                     }
                     break;
