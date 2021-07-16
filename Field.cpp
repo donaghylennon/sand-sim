@@ -100,16 +100,28 @@ std::vector<unsigned int> Field::get_circle_points(unsigned int pos, unsigned in
     unsigned int Y = radius;
     int D = 3 - (int)2 * radius;
 
-    while(X < Y) {
+    while(X <= Y) {
         // Plot circle (X_c, Y_c, X, Y)
-        points.push_back(get_index(X_c + Y, Y_c + X));
-        points.push_back(get_index(X_c + X, Y_c + Y));
-        points.push_back(get_index(X_c - X, Y_c + Y));
-        points.push_back(get_index(X_c - Y, Y_c + X));
-        points.push_back(get_index(X_c - Y, Y_c - X));
-        points.push_back(get_index(X_c - X, Y_c - Y));
-        points.push_back(get_index(X_c + X, Y_c - Y));
-        points.push_back(get_index(X_c + Y, Y_c - X));
+        for(int i = -1; i <= 1; i+=2) {
+            for(int j = -1; j <= 1; j+=2) {
+                //int x = X_c + (i*X);
+                unsigned int pos_a = get_index(X_c + i*X, Y_c + j*Y);
+                if(pos_a/width == (Y_c + j*Y))
+                    points.push_back(pos_a);
+                unsigned int pos_b = get_index(X_c + i*Y, Y_c + j*X);
+                if(pos_b/width == (Y_c + j*X))
+                    points.push_back(pos_b);
+            }
+        }
+
+        //points.push_back(get_index(X_c + Y, Y_c + X));*
+        //points.push_back(get_index(X_c + X, Y_c + Y));*
+        //points.push_back(get_index(X_c - X, Y_c + Y));*
+        //points.push_back(get_index(X_c - Y, Y_c + X));*
+        //points.push_back(get_index(X_c - Y, Y_c - X));*
+        //points.push_back(get_index(X_c - X, Y_c - Y));*
+        //points.push_back(get_index(X_c + X, Y_c - Y));*
+        //points.push_back(get_index(X_c + Y, Y_c - X));*
         
         if(D < 0) {
             D = D + 4*X + 6;

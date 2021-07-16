@@ -65,6 +65,7 @@ private:
     inline int compare_densities(unsigned int pos_a, unsigned int pos_b);
     std::vector<unsigned int> get_circle_points(unsigned int pos, unsigned int radius);
     std::vector<unsigned int> get_circle(unsigned int pos);
+    std::vector<unsigned int> get_line_points(unsigned int src, unsigned int dst);
 
 public:
     Field(uint32_t width, uint32_t height, uint32_t scale);
