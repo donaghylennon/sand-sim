@@ -104,7 +104,6 @@ std::vector<unsigned int> Field::get_circle_points(unsigned int pos, unsigned in
         // Plot circle (X_c, Y_c, X, Y)
         for(int i = -1; i <= 1; i+=2) {
             for(int j = -1; j <= 1; j+=2) {
-                //int x = X_c + (i*X);
                 unsigned int pos_a = get_index(X_c + i*X, Y_c + j*Y);
                 if(pos_a/width == (Y_c + j*Y))
                     points.push_back(pos_a);
@@ -114,15 +113,51 @@ std::vector<unsigned int> Field::get_circle_points(unsigned int pos, unsigned in
             }
         }
 
-        //points.push_back(get_index(X_c + Y, Y_c + X));*
-        //points.push_back(get_index(X_c + X, Y_c + Y));*
-        //points.push_back(get_index(X_c - X, Y_c + Y));*
-        //points.push_back(get_index(X_c - Y, Y_c + X));*
-        //points.push_back(get_index(X_c - Y, Y_c - X));*
-        //points.push_back(get_index(X_c - X, Y_c - Y));*
-        //points.push_back(get_index(X_c + X, Y_c - Y));*
-        //points.push_back(get_index(X_c + Y, Y_c - X));*
-        
+        if(D < 0) {
+            D = D + 4*X + 6;
+            X = X + 1;
+            Y = Y;
+        } else {
+            D = D + 4*(X-Y) + 10;
+            X = X + 1;
+            Y = Y - 1;
+        }
+    }
+    return points;
+}
+
+std::vector<unsigned int> Field::get_circle_filled(unsigned int pos, unsigned int radius) {
+    std::vector<unsigned int> points = {};
+    unsigned int X_c = pos % width;
+    unsigned int Y_c = pos / width;
+    unsigned int X = 0;
+    unsigned int Y = radius;
+    int D = 3 - (int)2 * radius;
+
+    while(X <= Y) {
+        // Plot circle (X_c, Y_c, X, Y)
+        for(int i = -1; i <= 1; i+=2) {
+            for(int j = -1; j <= 1; j+=2) {
+                unsigned int pos_a = get_index(X_c + i*X, Y_c + j*Y);
+                // Try to reimplement this part by drawing lines only
+                // from (x of point on circle, y of centre) to point of circle
+                // May not even need line func as straight line
+                if(pos_a/width == (Y_c + j*Y)) {
+                    points.push_back(pos_a);
+                    //for(unsigned int point : get_line_points(pos, pos_a))
+                    for(unsigned int point : get_line_points(get_index(X_c + i*X, Y_c), pos_a))
+                        points.push_back(point);
+                }
+                unsigned int pos_b = get_index(X_c + i*Y, Y_c + j*X);
+                if(pos_b/width == (Y_c + j*X)) {
+                    points.push_back(pos_b);
+                    //for(unsigned int point : get_line_points(pos, pos_b))
+                    for(unsigned int point : get_line_points(get_index(X_c + i*Y, Y_c), pos_b))
+                        points.push_back(point);
+                }
+            }
+        }
+
         if(D < 0) {
             D = D + 4*X + 6;
             X = X + 1;
@@ -161,6 +196,68 @@ std::vector<unsigned int> Field::get_circle(unsigned int pos) {
     positions.push_back(pos + 2*width - 1);
     positions.push_back(pos + 2*width);
     positions.push_back(pos + 2*width + 1);
+    return positions;
+}
+
+std::vector<unsigned int> Field::get_line_points(unsigned int src, unsigned int dst) {
+    std::vector<unsigned int> positions = {};
+    unsigned int x1 = src % width;
+    unsigned int x2 = dst % width;
+    unsigned int y1 = src / width;
+    unsigned int y2 = dst / width;
+    int rise = y2 - y1;
+    int run = x2 - x1;
+    if(run == 0) {
+        if(y2 < y1) {
+            unsigned int temp = y1;
+            y1 = y2;
+            y2 = temp;
+        }
+        for(unsigned int y = y1; y <= y2; y++) {
+            positions.push_back(get_index(x1, y));
+        }
+    } else {
+        float m = (float)rise/run;
+        int adjust = m >= 0 ? 1 : -1;
+        float offset = 0;
+        float threshold = 0.5;
+        if(m <= 1 && m >= -1) {
+            float delta = abs(m);
+            unsigned int y = y1;
+            if(x2 < x1) {
+                unsigned int temp = x1;
+                x1 = x2;
+                x2 = temp;
+                y = y2;
+            }
+            for(unsigned int x = x1; x <= x2; x++) {
+                positions.push_back(get_index(x, y));
+                offset += delta;
+                if(offset >= threshold) {
+                    y += adjust;
+                    threshold += 1;
+                }
+            }
+        } else {
+            float delta = abs((float)run/rise);
+            unsigned int x = x1;
+            if(y2 < y1) {
+                unsigned int temp = y1;
+                y1 = y2;
+                y2 = temp;
+                x = x2;
+            }
+            for(unsigned int y = y1; y <= y2; y++) {
+                positions.push_back(get_index(x, y));
+                offset += delta;
+                if(offset >= threshold) {
+                    x += adjust;
+                    threshold += 1;
+                }
+            }
+        }
+    }
+
     return positions;
 }
 
@@ -317,7 +414,7 @@ void Field::update_surrounding(unsigned int pos) {
 }
 
 void Field::spawn_water(unsigned int pos) {
-    for(auto& position : get_circle(pos)) {
+    for(auto& position : get_circle_filled(pos, 10)) {
         if(position >= 0 && position < length)
             field[position] = { water, 0, true, false };
     }
@@ -326,7 +423,7 @@ void Field::spawn_water(unsigned int pos) {
 }
 
 void Field::spawn_sand(unsigned int pos) {
-    for(auto& position : get_circle(pos)) {
+    for(auto& position : get_circle_filled(pos, 10)) {
         if(position >= 0 && position < length)
             field[position] = { sand, 0, true, false };
     }
@@ -335,7 +432,7 @@ void Field::spawn_sand(unsigned int pos) {
 }
 
 void Field::spawn_wood(unsigned int pos) {
-    for(auto& position : get_circle(pos)) {
+    for(auto& position : get_circle_filled(pos, 10)) {
         if(position >= 0 && position < length)
             field[position] = { wood, 0, false, false };
     }
@@ -373,7 +470,6 @@ void Field::run() {
     bool running = true;
     auto prev_cycle = std::chrono::high_resolution_clock::now();
     draw();
-    bool lol = true;
     bool mouse_is_down = false;
     int selection = 0;
     unsigned int x_pos = 0;
@@ -387,6 +483,9 @@ void Field::run() {
 
         if(dt > 1000/framerate) {
             prev_cycle = current_time;
+            // combine this and loop into tick() method to call in Game class
+            // or similar to seperate simulation logic from management
+            // maybe seperate drawing too?
             set_all_not_updated();
             for(int i = 0; i < length; i++) {
                 if(!field[i].updated)
@@ -394,6 +493,7 @@ void Field::run() {
             }
             draw();
 
+            // maybe put in selection method
             if(mouse_is_down) {
                 if(selection == 0)
                     spawn_sand(sel_index);
@@ -420,6 +520,8 @@ void Field::run() {
                 case SDL_MOUSEMOTION:
                     x_pos = event.motion.x/scale;
                     y_pos = event.motion.y/scale;
+                    // replace with get_index() and func to set selector
+                    // (maybe have field.draw(x, y) or (pos) )
                     sel_index = width*y_pos + x_pos;
                     break;
                 case SDL_KEYDOWN:
