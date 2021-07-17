@@ -296,12 +296,11 @@ void Field::move(unsigned int pos) {
 }
 
 unsigned int Field::water_next_pos(unsigned int pos) {
-    int rnd = rand() % 2;
     unsigned int south = south_block(pos);
     if(south != length && compare_densities(pos, south))
         return south;
 
-    if(rnd) {
+    if(odd_turn) {
         unsigned int southeast = southeast_block(pos);
         if(southeast != length && compare_densities(pos, southeast))
             return southeast;
@@ -359,13 +358,23 @@ unsigned int Field::sand_next_pos(unsigned int pos) {
     if(south != length && compare_densities(pos, south))
         return south;
 
-    unsigned int southwest = southwest_block(pos);
-    if(southwest != length && compare_densities(pos, southwest))
-        return southwest;
+    if(odd_turn) {
+        unsigned int southwest = southwest_block(pos);
+        if(southwest != length && compare_densities(pos, southwest))
+            return southwest;
 
-    unsigned int southeast = southeast_block(pos);
-    if(southeast != length && compare_densities(pos, southeast))
-        return southeast;
+        unsigned int southeast = southeast_block(pos);
+        if(southeast != length && compare_densities(pos, southeast))
+            return southeast;
+    } else {
+        unsigned int southeast = southeast_block(pos);
+        if(southeast != length && compare_densities(pos, southeast))
+            return southeast;
+
+        unsigned int southwest = southwest_block(pos);
+        if(southwest != length && compare_densities(pos, southwest))
+            return southwest;
+    }
 
     return pos;
 }
@@ -414,7 +423,7 @@ void Field::update_surrounding(unsigned int pos) {
 }
 
 void Field::spawn_water(unsigned int pos) {
-    for(auto& position : get_circle_filled(pos, 10)) {
+    for(auto& position : get_circle_filled(pos, sel_radius)) {
         if(position >= 0 && position < length)
             field[position] = { water, 0, true, false };
     }
@@ -423,18 +432,22 @@ void Field::spawn_water(unsigned int pos) {
 }
 
 void Field::spawn_sand(unsigned int pos) {
-    for(auto& position : get_circle_filled(pos, 10)) {
+    int shade;
+    for(auto& position : get_circle_filled(pos, sel_radius)) {
+        shade = rand() % 3;
         if(position >= 0 && position < length)
-            field[position] = { sand, 0, true, false };
+            field[position] = { sand, shade, true, false };
     }
     //field[pos] = { sand, 0, true, false };
     //update_surrounding(pos);
 }
 
 void Field::spawn_wood(unsigned int pos) {
-    for(auto& position : get_circle_filled(pos, 10)) {
+    int shade;
+    for(auto& position : get_circle_filled(pos, sel_radius)) {
+        shade = rand() % 2;
         if(position >= 0 && position < length)
-            field[position] = { wood, 0, false, false };
+            field[position] = { wood, shade, false, false };
     }
     //field[pos] = { wood, 0, false, false };
     //update_surrounding(pos);
@@ -448,7 +461,7 @@ void Field::set_all_not_updated() {
 
 void Field::draw() {
     for(int i = 0; i < length; i++) {
-        draw_buffer[i] = materials[(int) field[i].type].colour;
+        draw_buffer[i] = materials[(int) field[i].type].colour[field[i].shade];
     }
 
     draw_selector();
@@ -491,6 +504,17 @@ void Field::run() {
                 if(!field[i].updated)
                     move(i);
             }
+            //if(odd_turn) {
+            //    for(int i = 0; i < length; i++) {
+            //        if(!field[i].updated)
+            //            move(i);
+            //    }
+            //} else {
+            //    for(int i = length-1; i >= 0; i--) {
+            //        if(!field[i].updated)
+            //            move(i);
+            //    }
+            //}
             draw();
 
             // maybe put in selection method
@@ -502,6 +526,7 @@ void Field::run() {
                 else if(selection == 2)
                     spawn_wood(sel_index);
             }
+            odd_turn = !odd_turn;
         }
 
         SDL_Event event;

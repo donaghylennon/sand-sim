@@ -13,13 +13,13 @@ enum MatType {
 
 struct Material {
     unsigned int density;
-    uint32_t colour;
     bool can_fall;
+    uint32_t *colour;
 };
 
 struct Block {
     MatType type;
-    uint32_t shade;
+    unsigned int shade;
     bool falling;
     bool updated;
 };
@@ -37,11 +37,15 @@ private:
     uint32_t length;
     float framerate = 60.0f;
     Block *field;
+    uint32_t air_colour[1] = { 0 };
+    uint32_t water_colour[1] = { 0x002277ff };
+    uint32_t sand_colour[3] = { 0x443300ff, 0x553300ff, 0x664400ff };
+    uint32_t wood_colour[2] = { 0x774400ff, 0x775500ff };
     Material materials[4] = {
-        { 5, 0, true }, // air
-        { 9, 0x002277ff, true }, // water
-        { 15, 0x443300ff, true }, // sand
-        { 40, 0x774400ff, false }, // wood
+        { 5, true, air_colour, }, // air
+        { 9, true, water_colour, }, // water
+        { 15, true, sand_colour, }, // sand
+        { 40, false, wood_colour, }, // wood
     };
 
     uint32_t *draw_buffer;
@@ -49,8 +53,9 @@ private:
     SDL_Renderer *renderer;
     SDL_Texture *texture;
 
-    unsigned int sel_index;
-    unsigned int sel_radius;
+    bool odd_turn = false;
+    unsigned int sel_index = 0;
+    unsigned int sel_radius = 5;
 
     unsigned int get_index(unsigned int x, unsigned int  y);
     unsigned int south_block(unsigned int pos);
