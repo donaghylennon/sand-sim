@@ -8,7 +8,7 @@
 #include <vector>
 
 enum MatType {
-    air, water, sand, wood, acid
+    air, water, sand, wood, acid, steel
 };
 
 enum State {
@@ -48,12 +48,14 @@ private:
     uint32_t sand_colour[3] = { 0x443300ff, 0x553300ff, 0x664400ff };
     uint32_t wood_colour[2] = { 0x774400ff, 0x775500ff };
     uint32_t acid_colour[1] = { 0x447700ff };
-    Material materials[5] = {
+    uint32_t steel_colour[1] = { 0x111122ff };
+    Material materials[6] = {
         { 5, true, 0, gas, air_colour, }, // air
         { 9, true, 3, liquid, water_colour, }, // water
         { 15, true, 7, solid, sand_colour, }, // sand
         { 40, false, 5, solid, wood_colour, }, // wood
         { 9, true, 2, liquid, acid_colour, }, // acid
+        { 80, false, 20, solid, steel_colour, }, // steel
     };
 
     uint32_t *draw_buffer;
@@ -99,6 +101,7 @@ public:
     void spawn_sand(unsigned int pos);
     void spawn_wood(unsigned int pos);
     void spawn_acid(unsigned int pos);
+    void spawn_steel(unsigned int pos);
 
     void set_all_not_updated();
 

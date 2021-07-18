@@ -373,78 +373,101 @@ void Field::sand_move(unsigned int pos) {
 }
 
 void Field::acid_move(unsigned int pos) {
-    int d = rand() % 4;
+    int d = rand() % 16;
     bool destroy = d == 0 ? true : false;
     field[pos].updated = true;
 
-    if(d == 0) {
         unsigned int next_pos = south_block(pos);
-        if(next_pos != length && compare_densities(pos, next_pos)) {
-            swap_blocks(pos, next_pos);
+        if(next_pos != length) {
+            if(d == 1 && materials[field[next_pos].type].state == solid && compare_strength(next_pos, 8)) {
+                field[next_pos] = field[pos];
+                field[pos] = { air, 0, false, true };
+            } else if(compare_densities(pos, next_pos)) {
+                swap_blocks(pos, next_pos);
+            }
         }
 
         if(odd_turn) {
             next_pos = southeast_block(pos);
-            if(next_pos != length && compare_densities(pos, next_pos)) {
-                swap_blocks(pos, next_pos);
+            if(next_pos != length) {
+                if(d == 1 && materials[field[next_pos].type].state == solid && compare_strength(next_pos, 8)) {
+                    field[next_pos] = field[pos];
+                    field[pos] = { air, 0, false, true };
+                } else if(compare_densities(pos, next_pos)) {
+                    swap_blocks(pos, next_pos);
+                }
             }
 
             next_pos = southwest_block(pos);
-            if(next_pos != length && compare_densities(pos, next_pos)) {
-                swap_blocks(pos, next_pos);
+            if(next_pos != length) {
+                if(d == 1 && materials[field[next_pos].type].state == solid && compare_strength(next_pos, 8)) {
+                    field[next_pos] = field[pos];
+                    field[pos] = { air, 0, false, true };
+                } else if(compare_densities(pos, next_pos)) {
+                    swap_blocks(pos, next_pos);
+                }
             }
 
             next_pos = east_block(pos);
-            if(next_pos!= length && compare_densities(pos, next_pos)) {
-                swap_blocks(pos, next_pos);
+            if(next_pos != length) {
+                if(d == 1 && materials[field[next_pos].type].state == solid && compare_strength(next_pos, 8)) {
+                    field[next_pos] = field[pos];
+                    field[pos] = { air, 0, false, true };
+                } else if(compare_densities(pos, next_pos)) {
+                    swap_blocks(pos, next_pos);
+                }
             }
 
             next_pos = west_block(pos);
-            if(next_pos != length && compare_densities(pos, next_pos)) {
-                swap_blocks(pos, next_pos);
+            if(next_pos != length) {
+                if(d == 1 && materials[field[next_pos].type].state == solid && compare_strength(next_pos, 8)) {
+                    field[next_pos] = field[pos];
+                    field[pos] = { air, 0, false, true };
+                } else if(compare_densities(pos, next_pos)) {
+                    swap_blocks(pos, next_pos);
+                }
             }
         } else {
             next_pos = southwest_block(pos);
-            if(next_pos != length && compare_densities(pos, next_pos)) {
-                swap_blocks(pos, next_pos);
+            if(next_pos != length) {
+                if(d == 1 && materials[field[next_pos].type].state == solid && compare_strength(next_pos, 8)) {
+                    field[next_pos] = field[pos];
+                    field[pos] = { air, 0, false, true };
+                } else if(compare_densities(pos, next_pos)) {
+                    swap_blocks(pos, next_pos);
+                }
             }
 
             next_pos = southeast_block(pos);
-            if(next_pos != length && compare_densities(pos, next_pos)) {
-                swap_blocks(pos, next_pos);
+            if(next_pos != length) {
+                if(d == 1 && materials[field[next_pos].type].state == solid && compare_strength(next_pos, 8)) {
+                    field[next_pos] = field[pos];
+                    field[pos] = { air, 0, false, true };
+                } else if(compare_densities(pos, next_pos)) {
+                    swap_blocks(pos, next_pos);
+                }
             }
 
             next_pos = west_block(pos);
-            if(next_pos != length && compare_densities(pos, next_pos)) {
-                swap_blocks(pos, next_pos);
+            if(next_pos != length) {
+                if(d == 1 && materials[field[next_pos].type].state == solid && compare_strength(next_pos, 8)) {
+                    field[next_pos] = field[pos];
+                    field[pos] = { air, 0, false, true };
+                } else if(compare_densities(pos, next_pos)) {
+                    swap_blocks(pos, next_pos);
+                }
             }
 
             next_pos = east_block(pos);
-            if(next_pos!= length && compare_densities(pos, next_pos)) {
-                swap_blocks(pos, next_pos);
+            if(next_pos != length) {
+                if(d == 1 && materials[field[next_pos].type].state == solid && compare_strength(next_pos, 8)) {
+                    field[next_pos] = field[pos];
+                    field[pos] = { air, 0, false, true };
+                } else if(compare_densities(pos, next_pos)) {
+                    swap_blocks(pos, next_pos);
+                }
             }
         }
-    } else {
-        if(d == 1) {
-            unsigned int next_pos = south_block(pos);
-            if(next_pos != length && materials[field[next_pos].type].state == solid && compare_strength(pos, 8)) {
-                field[next_pos] = field[pos];
-                field[pos] = { air, 0, false, true };
-            }
-        } else if(d == 2) {
-            unsigned int next_pos = west_block(pos);
-            if(next_pos != length && materials[field[next_pos].type].state == solid && compare_strength(pos, 8)) {
-                field[next_pos] = field[pos];
-                field[pos] = { air, 0, false, true };
-            }
-        } else if(d == 3) {
-            unsigned int next_pos = east_block(pos);
-            if(next_pos != length && materials[field[next_pos].type].state == solid && compare_strength(pos, 8)) {
-                field[next_pos] = field[pos];
-                field[pos] = { air, 0, false, true };
-            }
-        }
-    }
 }
 
 unsigned int Field::water_next_pos(unsigned int pos) {
@@ -614,6 +637,15 @@ void Field::spawn_acid(unsigned int pos) {
     //update_surrounding(pos);
 }
 
+void Field::spawn_steel(unsigned int pos) {
+    for(auto& position : get_circle_filled(pos, sel_radius)) {
+        if(position >= 0 && position < length)
+            field[position] = { steel, 0, false, false };
+    }
+    //field[pos] = { wood, 0, false, false };
+    //update_surrounding(pos);
+}
+
 void Field::set_all_not_updated() {
     for(int i = 0; i < length; i++) {
         field[i].updated = false;
@@ -688,6 +720,8 @@ void Field::run() {
                     spawn_wood(sel_index);
                 else if(selection == 3)
                     spawn_acid(sel_index);
+                else if(selection == 4)
+                    spawn_steel(sel_index);
             }
             odd_turn = !odd_turn;
         }
@@ -725,6 +759,9 @@ void Field::run() {
                             break;
                         case SDLK_a:
                             selection = 3;
+                            break;
+                        case SDLK_x:
+                            selection = 4;
                             break;
                         case SDLK_3:
                             sel_radius = 3;
