@@ -92,6 +92,10 @@ inline int Field::compare_densities(unsigned int pos_a, unsigned int pos_b) {
     return materials[(int) field[pos_a].type].density > materials[(int) field[pos_b].type].density;
 }
 
+inline bool Field::compare_strength(unsigned int pos, unsigned int threshold) {
+    return materials[field[pos].type].strength < threshold;
+}
+
 std::vector<unsigned int> Field::get_circle_points(unsigned int pos, unsigned int radius) {
     std::vector<unsigned int> points = {};
     unsigned int X_c = pos % width;
@@ -281,6 +285,8 @@ void Field::move(unsigned int pos) {
             //next_pos = sand_next_pos(pos);
             sand_move(pos);
             break;
+        case acid:
+            acid_move(pos);
         default:
             return;
     }
@@ -363,6 +369,81 @@ void Field::sand_move(unsigned int pos) {
         next_pos = southwest_block(pos);
         if(next_pos != length && compare_densities(pos, next_pos))
             swap_blocks(pos, next_pos);
+    }
+}
+
+void Field::acid_move(unsigned int pos) {
+    int d = rand() % 4;
+    bool destroy = d == 0 ? true : false;
+    field[pos].updated = true;
+
+    if(d == 0) {
+        unsigned int next_pos = south_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos)) {
+            swap_blocks(pos, next_pos);
+        }
+
+        if(odd_turn) {
+            next_pos = southeast_block(pos);
+            if(next_pos != length && compare_densities(pos, next_pos)) {
+                swap_blocks(pos, next_pos);
+            }
+
+            next_pos = southwest_block(pos);
+            if(next_pos != length && compare_densities(pos, next_pos)) {
+                swap_blocks(pos, next_pos);
+            }
+
+            next_pos = east_block(pos);
+            if(next_pos!= length && compare_densities(pos, next_pos)) {
+                swap_blocks(pos, next_pos);
+            }
+
+            next_pos = west_block(pos);
+            if(next_pos != length && compare_densities(pos, next_pos)) {
+                swap_blocks(pos, next_pos);
+            }
+        } else {
+            next_pos = southwest_block(pos);
+            if(next_pos != length && compare_densities(pos, next_pos)) {
+                swap_blocks(pos, next_pos);
+            }
+
+            next_pos = southeast_block(pos);
+            if(next_pos != length && compare_densities(pos, next_pos)) {
+                swap_blocks(pos, next_pos);
+            }
+
+            next_pos = west_block(pos);
+            if(next_pos != length && compare_densities(pos, next_pos)) {
+                swap_blocks(pos, next_pos);
+            }
+
+            next_pos = east_block(pos);
+            if(next_pos!= length && compare_densities(pos, next_pos)) {
+                swap_blocks(pos, next_pos);
+            }
+        }
+    } else {
+        if(d == 1) {
+            unsigned int next_pos = south_block(pos);
+            if(next_pos != length && materials[field[next_pos].type].state == solid && compare_strength(pos, 8)) {
+                field[next_pos] = field[pos];
+                field[pos] = { air, 0, false, true };
+            }
+        } else if(d == 2) {
+            unsigned int next_pos = west_block(pos);
+            if(next_pos != length && materials[field[next_pos].type].state == solid && compare_strength(pos, 8)) {
+                field[next_pos] = field[pos];
+                field[pos] = { air, 0, false, true };
+            }
+        } else if(d == 3) {
+            unsigned int next_pos = east_block(pos);
+            if(next_pos != length && materials[field[next_pos].type].state == solid && compare_strength(pos, 8)) {
+                field[next_pos] = field[pos];
+                field[pos] = { air, 0, false, true };
+            }
+        }
     }
 }
 
@@ -524,6 +605,15 @@ void Field::spawn_wood(unsigned int pos) {
     //update_surrounding(pos);
 }
 
+void Field::spawn_acid(unsigned int pos) {
+    for(auto& position : get_circle_filled(pos, sel_radius)) {
+        if(position >= 0 && position < length)
+            field[position] = { acid, 0, true, false };
+    }
+    //field[pos] = { water, 0, true, false };
+    //update_surrounding(pos);
+}
+
 void Field::set_all_not_updated() {
     for(int i = 0; i < length; i++) {
         field[i].updated = false;
@@ -596,6 +686,8 @@ void Field::run() {
                     spawn_water(sel_index);
                 else if(selection == 2)
                     spawn_wood(sel_index);
+                else if(selection == 3)
+                    spawn_acid(sel_index);
             }
             odd_turn = !odd_turn;
         }
@@ -630,6 +722,9 @@ void Field::run() {
                             break;
                         case SDLK_e:
                             selection = 2;
+                            break;
+                        case SDLK_a:
+                            selection = 3;
                             break;
                         case SDLK_3:
                             sel_radius = 3;

@@ -8,12 +8,18 @@
 #include <vector>
 
 enum MatType {
-    air, water, sand, wood
+    air, water, sand, wood, acid
+};
+
+enum State {
+    gas, liquid, solid
 };
 
 struct Material {
     unsigned int density;
     bool can_fall;
+    unsigned int strength;
+    State state;
     uint32_t *colour;
 };
 
@@ -41,11 +47,13 @@ private:
     uint32_t water_colour[1] = { 0x002277ff };
     uint32_t sand_colour[3] = { 0x443300ff, 0x553300ff, 0x664400ff };
     uint32_t wood_colour[2] = { 0x774400ff, 0x775500ff };
-    Material materials[4] = {
-        { 5, true, air_colour, }, // air
-        { 9, true, water_colour, }, // water
-        { 15, true, sand_colour, }, // sand
-        { 40, false, wood_colour, }, // wood
+    uint32_t acid_colour[1] = { 0x447700ff };
+    Material materials[5] = {
+        { 5, true, 0, gas, air_colour, }, // air
+        { 9, true, 3, liquid, water_colour, }, // water
+        { 15, true, 7, solid, sand_colour, }, // sand
+        { 40, false, 5, solid, wood_colour, }, // wood
+        { 9, true, 2, liquid, acid_colour, }, // acid
     };
 
     uint32_t *draw_buffer;
@@ -68,6 +76,7 @@ private:
     unsigned int north_block(unsigned int pos);
 
     inline int compare_densities(unsigned int pos_a, unsigned int pos_b);
+    inline bool compare_strength(unsigned int pos, unsigned int threshold);
     std::vector<unsigned int> get_circle_points(unsigned int pos, unsigned int radius);
     std::vector<unsigned int> get_circle_filled(unsigned int pos, unsigned int radius);
     std::vector<unsigned int> get_circle(unsigned int pos);
@@ -82,12 +91,14 @@ public:
     unsigned int sand_next_pos(unsigned int pos);
     void water_move(unsigned int pos);
     void sand_move(unsigned int pos);
+    void acid_move(unsigned int pos);
     void push(unsigned int from_pos, unsigned int pos);
     void update_surrounding(unsigned int pos);
 
     void spawn_water(unsigned int pos);
     void spawn_sand(unsigned int pos);
     void spawn_wood(unsigned int pos);
+    void spawn_acid(unsigned int pos);
 
     void set_all_not_updated();
 
