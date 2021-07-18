@@ -6,5 +6,6 @@ Click to place particles
 - press w to switch to water
 - press e to switch to wood
 - press a to switch to acid
+- press x to switch to steel
 
 - change size of placement by pressing numbers from 3 to 7
