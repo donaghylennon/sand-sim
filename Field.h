@@ -73,11 +73,15 @@ private:
     std::vector<unsigned int> get_circle(unsigned int pos);
     std::vector<unsigned int> get_line_points(unsigned int src, unsigned int dst);
 
+    void swap_blocks(unsigned int pos_a, unsigned int pos_b);
+
 public:
     Field(uint32_t width, uint32_t height, uint32_t scale);
     void move(unsigned int pos);
     unsigned int water_next_pos(unsigned int pos);
     unsigned int sand_next_pos(unsigned int pos);
+    void water_move(unsigned int pos);
+    void sand_move(unsigned int pos);
     void push(unsigned int from_pos, unsigned int pos);
     void update_surrounding(unsigned int pos);
 

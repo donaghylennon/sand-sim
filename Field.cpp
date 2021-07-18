@@ -261,37 +261,108 @@ std::vector<unsigned int> Field::get_line_points(unsigned int src, unsigned int 
     return positions;
 }
 
+void Field::swap_blocks(unsigned int pos_a, unsigned int pos_b) {
+        Block temp = field[pos_b];
+        field[pos_b] = field[pos_a];
+        field[pos_a] = temp;
+        //field[pos].falling = true;
+        //update_surrounding(next_pos);
+        //field[next_pos].updated = true;
+}
+
 void Field::move(unsigned int pos) {
     unsigned int next_pos;
     switch(field[pos].type) {
         case water:
-            next_pos = water_next_pos(pos);
+            //next_pos = water_next_pos(pos);
+            water_move(pos);
             break;
         case sand:
-            next_pos = sand_next_pos(pos);
+            //next_pos = sand_next_pos(pos);
+            sand_move(pos);
             break;
         default:
             return;
     }
-    //if(next_pos >= length) {
-    //    std::cout << "invalid next_pos" << std::endl;
-    //    std::cout << next_pos << " and " << length << std::endl;
+
+    //if(next_pos == pos) {
+    //    field[pos].falling = false;
+    //} else {
+    //    //push(pos, next_pos);
+    //    Block temp = field[next_pos];
+    //    field[next_pos] = field[pos];
+    //    field[pos] = temp;
+    //    field[pos].falling = true;
+    //    //update_surrounding(next_pos);
+    //    field[next_pos].updated = true;
     //}
-    //else
-    //    std::cout << "valid next_pos" << std::endl;
-    //Block temp = field[pos];
-    //push(pos, next_pos);
-    //field[next_pos] = temp;
-    if(next_pos == pos) {
-        field[pos].falling = false;
+}
+
+void Field::water_move(unsigned int pos) {
+    field[pos].updated = true;
+
+    unsigned int next_pos = south_block(pos);
+    if(next_pos != length && compare_densities(pos, next_pos))
+        swap_blocks(pos, next_pos);
+
+    if(odd_turn) {
+        next_pos = southeast_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
+
+        next_pos = southwest_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
+
+        next_pos = east_block(pos);
+        if(next_pos!= length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
+
+        next_pos = west_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
     } else {
-        //push(pos, next_pos);
-        Block temp = field[next_pos];
-        field[next_pos] = field[pos];
-        field[pos] = temp;
-        field[pos].falling = true;
-        //update_surrounding(next_pos);
-        field[next_pos].updated = true;
+        next_pos = southwest_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
+
+        next_pos = southeast_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
+
+        next_pos = west_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
+
+        next_pos = east_block(pos);
+        if(next_pos!= length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
+    }
+}
+
+void Field::sand_move(unsigned int pos) {
+    field[pos].updated = true;
+
+    unsigned int next_pos = south_block(pos);
+    if(next_pos != length && compare_densities(pos, next_pos))
+        swap_blocks(pos, next_pos);
+
+    if(odd_turn) {
+        next_pos = southwest_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
+
+        next_pos = southeast_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
+    } else {
+        next_pos = southeast_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
+
+        next_pos = southwest_block(pos);
+        if(next_pos != length && compare_densities(pos, next_pos))
+            swap_blocks(pos, next_pos);
     }
 }
 
