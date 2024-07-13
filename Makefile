@@ -1,3 +1,3 @@
 
 sandsim: main.cpp Field.cpp Field.h
-	g++ -Wall -lSDL2 main.cpp Field.cpp -o sandsim
+	g++ main.cpp Field.cpp -Wall -lSDL2 -o sandsim
